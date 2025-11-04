@@ -1,0 +1,53 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql
+    environment:
+      SA_PASSWORD: "YourStrongPassword123!"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrongPassword123!", "-Q", "SELECT 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - pricenet
+
+  pricewatcherapi:
+    build:
+      context: .
+      dockerfile: PriceWatcher.Api/Dockerfile
+    container_name: pricewatcherapi
+    depends_on:
+      - mssql
+    ports:
+      - "7060:8080"  # HTTP
+      - "7061:8081"  # HTTPS
+    environment:
+      - ASPNETCORE_URLS=https://+:8081;http://+:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_Kestrel__Certificates__Default__Password=YourStrongPassword123
+      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/pricewatcherapi.pfx
+      - ConnectionStrings__DefaultConnection=Server=mssql;Database=PriceWatcherDb;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=True;
+    volumes:
+      - ${USERPROFILE}\.aspnet\https:/https:ro
+    networks:
+      - pricenet
+
+  catalogloader:
+    build:
+      context: .
+      dockerfile: CatalogLoader/Dockerfile
+    container_name: catalogloader
+    depends_on:
+      - pricewatcherapi
+    environment:
+      - ApiSettings__BaseUrl=http://pricewatcherapi:8080
+    networks:
+      - pricenet
+
+networks:
+  pricenet:
+    driver: bridge

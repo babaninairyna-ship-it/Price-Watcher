@@ -4,11 +4,16 @@ public class OnlinerBackgroundService : BackgroundService
 {
     private readonly ILogger<OnlinerBackgroundService> _logger;
     private readonly HttpClient _httpClient;
+    private readonly string _apiBaseUrl;
 
-    public OnlinerBackgroundService(ILogger<OnlinerBackgroundService> logger, IHttpClientFactory httpClientFactory)
+    public OnlinerBackgroundService(
+        ILogger<OnlinerBackgroundService> logger,
+        IHttpClientFactory httpClientFactory,
+        IConfiguration config)
     {
         _logger = logger;
         _httpClient = httpClientFactory.CreateClient();
+        _apiBaseUrl = config["ApiSettings:BaseUrl"]!;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -52,7 +57,7 @@ public class OnlinerBackgroundService : BackgroundService
 
             _logger.LogInformation("Found {count} products for query '{query}'.", productDtos.Count, query);
 
-            string apiUrl = "https://localhost:7060/api/products/import";
+            string apiUrl = $"{_apiBaseUrl}/api/products/import";
             var apiResponse = await _httpClient.PostAsJsonAsync(apiUrl, productDtos);
 
             if (apiResponse.IsSuccessStatusCode)
