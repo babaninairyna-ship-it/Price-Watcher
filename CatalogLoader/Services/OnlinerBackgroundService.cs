@@ -1,78 +1,51 @@
-﻿using System.Net.Http.Json;
+﻿using PriceWatcher.Data.Models;
 
-public class OnlinerBackgroundService : BackgroundService
+namespace CatalogLoader.Services
 {
-    private readonly ILogger<OnlinerBackgroundService> _logger;
-    private readonly HttpClient _httpClient;
-    private readonly string _apiBaseUrl;
-
-    public OnlinerBackgroundService(
-        ILogger<OnlinerBackgroundService> logger,
-        IHttpClientFactory httpClientFactory,
-        IConfiguration config)
+    /// <summary>
+    /// Background service responsible for fetching products from Onliner
+    /// and providing data to API on demand.
+    /// </summary>
+    public class OnlinerBackgroundService : BackgroundService
     {
-        _logger = logger;
-        _httpClient = httpClientFactory.CreateClient();
-        _apiBaseUrl = config["ApiSettings:BaseUrl"]!;
-    }
+        private readonly ILogger<OnlinerBackgroundService> _logger;
+        private readonly IServiceScopeFactory _scopeFactory;
+        private readonly OnlinerClient _onlinerClient;
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-    {
-        var queries = new List<string> { "xiaomi", "samsung", "iphone" };
-
-        while (!stoppingToken.IsCancellationRequested)
+        public OnlinerBackgroundService(
+            ILogger<OnlinerBackgroundService> logger,
+            OnlinerClient onlinerClient,
+            IServiceScopeFactory scopeFactory)
         {
-            foreach (var query in queries)
-            {
-                await FetchAndSendProducts(query);
-            }
-
-            _logger.LogInformation("Waiting 10 minutes until the next cycle...");
-            await Task.Delay(TimeSpan.FromMinutes(10), stoppingToken);
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _onlinerClient = onlinerClient ?? throw new ArgumentNullException(nameof(onlinerClient));
+            _scopeFactory = scopeFactory ?? throw new ArgumentNullException(nameof(scopeFactory));
         }
-    }
 
-    private async Task FetchAndSendProducts(string query)
-    {
-        try
+        /// <summary>
+        /// Fetches multiple products from Onliner by search query.
+        /// </summary>
+        public async Task<List<Product>> FetchProductsAsync(string query)
         {
-            _logger.LogInformation("Fetching products from Onliner: {query}.", query);
-
-            string onlinerUrl = $"https://catalog.onliner.by/sdapi/catalog.api/search/products?query={query}";
-            var onlinerResponse = await _httpClient.GetFromJsonAsync<OnlinerResponse>(onlinerUrl);
-
-            if (onlinerResponse?.Products == null || !onlinerResponse.Products.Any())
-            {
-                _logger.LogInformation("No products found for query '{query}'.", query);
-                return;
-            }
-
-            var productDtos = onlinerResponse.Products.Select(p => new ProductDto
-            {
-                OnlinerId = p.Id,
-                FullName = p.FullName,
-                PriceMin = decimal.Parse(p.Prices.PriceMin.Amount),
-                PriceMax = decimal.Parse(p.Prices.PriceMax.Amount)
-            }).ToList();
-
-            _logger.LogInformation("Found {count} products for query '{query}'.", productDtos.Count, query);
-
-            string apiUrl = $"{_apiBaseUrl}/api/products/import";
-            var apiResponse = await _httpClient.PostAsJsonAsync(apiUrl, productDtos);
-
-            if (apiResponse.IsSuccessStatusCode)
-            {
-                _logger.LogInformation("Products successfully sent to API.");
-            }
-            else
-            {
-                var error = await apiResponse.Content.ReadAsStringAsync();
-                _logger.LogError("Error sending products to the API: {error}.", error);
-            }
+            return await _onlinerClient.FetchProductsAsync(query);
         }
-        catch (Exception ex)
+
+        /// <summary>
+        /// Fetches a single product from Onliner by its key.
+        /// </summary>
+        public async Task<Product?> FetchProductByKeyAsync(string key)
         {
-            _logger.LogError(ex, "Error fetching data from Onliner for query '{query}'.", query);
+            return await _onlinerClient.FetchProductByKeyAsync(key);
+        }
+
+        /// <summary>
+        /// Not used actively, but required by BackgroundService.
+        /// Could implement periodic refresh if needed.
+        /// </summary>
+        protected override Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            // No periodic work is required here since this service just responds to API calls
+            return Task.CompletedTask;
         }
     }
 }

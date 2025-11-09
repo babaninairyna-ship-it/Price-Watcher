@@ -10,7 +10,8 @@ ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 
 COPY ["CatalogLoader/CatalogLoader.csproj", "CatalogLoader/"]
-COPY ["Shared/Shared.csproj", "Shared/"]
+COPY ["PriceWatcher.Data/PriceWatcher.Data.csproj", "PriceWatcher.Data/"]
+
 RUN dotnet restore "./CatalogLoader/CatalogLoader.csproj"
 
 COPY . .

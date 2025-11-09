@@ -13,8 +13,10 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["PriceWatcher.Api/PriceWatcher.Api.csproj", "PriceWatcher.Api/"]
-COPY ["Shared/Shared.csproj", "Shared/"]
+COPY ["PriceWatcher.Data/PriceWatcher.Data.csproj", "PriceWatcher.Data/"]
+
 RUN dotnet restore "./PriceWatcher.Api/PriceWatcher.Api.csproj"
+
 COPY . .
 WORKDIR "/src/PriceWatcher.Api"
 RUN dotnet build "./PriceWatcher.Api.csproj" -c $BUILD_CONFIGURATION -o /app/build

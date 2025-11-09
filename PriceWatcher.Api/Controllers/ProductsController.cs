@@ -1,86 +1,93 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using PriceWatcher.Data.Repositories;
+using CatalogLoader.Services;
+using PriceWatcher.Data.Models;
 
-[ApiController]
-[Route("api/[controller]")]
-public class ProductsController : ControllerBase
+namespace PriceWatcher.Api.Controllers
 {
-    private readonly ApplicationDbContext _db;
-    private readonly ILogger<ProductsController> _logger;
-
-    public ProductsController(ApplicationDbContext db, ILogger<ProductsController> logger)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ProductsController : ControllerBase
     {
-        _db = db;
-        _logger = logger;
-    }
+        private readonly ProductRepository _productRepo;
+        private readonly OnlinerClient _onlinerClient;
 
-    // POST: api/products/import
-    [HttpPost("import")]
-    public async Task<IActionResult> ImportProducts([FromBody] List<ProductDto> products)
-    {
-        if (products == null || products.Count == 0)
+        public ProductsController(
+            ProductRepository productRepo,
+            OnlinerClient onlinerClient)
         {
-            _logger.LogWarning("Empty product list received for import.");
-            return BadRequest("Product list is empty.");
+            _productRepo = productRepo;
+            _onlinerClient = onlinerClient;
         }
 
-        foreach (var dto in products)
+        /// <summary>
+        /// GET api/products?search=iphone
+        /// Fetch products from Onliner API and merge with tracked status.
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Get([FromQuery] string? search)
         {
-            try
+            if (string.IsNullOrWhiteSpace(search))
+                return BadRequest("Search query cannot be empty.");
+
+            var fetchedProducts = await _onlinerClient.FetchProductsAsync(search);
+            var trackedProducts = await _productRepo.GetTrackedProductsAsync();
+
+            var merged = fetchedProducts.Select(p =>
             {
-                _logger.LogInformation("Processing: {onlinerId} {name}", dto.OnlinerId, dto.FullName);
+                var tracked = trackedProducts.FirstOrDefault(t => t.OnlinerKey == p.OnlinerKey);
+                if (tracked != null)
+                    p.IsTracked = tracked.IsTracked;
 
-                var existing = await _db.Products.FirstOrDefaultAsync(p => p.OnlinerId == dto.OnlinerId);
-                if (existing != null)
-                {
-                    existing.FullName = dto.FullName;
-                    existing.PriceMin = dto.PriceMin;
-                    existing.PriceMax = dto.PriceMax;
-                }
-                else
-                {
-                    _db.Products.Add(new Product
-                    {
-                        OnlinerId = dto.OnlinerId,
-                        FullName = dto.FullName,
-                        PriceMin = dto.PriceMin,
-                        PriceMax = dto.PriceMax
-                    });
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error processing product {onlinerId}", dto.OnlinerId);
-            }
+                return p;
+            }).ToList();
+
+            return Ok(merged);
         }
 
-        try
+        /// <summary>
+        /// POST api/products/{key}/track
+        /// Mark product as tracked.
+        /// </summary>
+        [HttpPost("{key}/track")]
+        public async Task<IActionResult> Track(string key)
         {
-            await _db.SaveChangesAsync();
-            _logger.LogInformation("Saved {count} products to the database.", products.Count);
+            var product = await _onlinerClient.FetchProductByKeyAsync(key);
+            if (product == null)
+                return NotFound("Product not found.");
+
+            product.IsTracked = true;
+            await _productRepo.SaveProductsAsync(new List<Product> { product });
+
+            return Ok();
         }
-        catch (DbUpdateException dbEx)
+
+        /// <summary>
+        /// POST api/products/{key}/untrack
+        /// Unmark product as tracked.
+        /// </summary>
+        [HttpPost("{key}/untrack")]
+        public async Task<IActionResult> Untrack(string key)
         {
-            _logger.LogError(dbEx, "Error saving products: {msg}.", dbEx.InnerException?.Message ?? dbEx.Message);
-            return StatusCode(500, $"Database error: {dbEx.InnerException?.Message ?? dbEx.Message}");
+            var product = await _productRepo.GetByKeyAsync(key);
+            if (product == null)
+                return NotFound("Product not found.");
+
+            product.IsTracked = false;
+            await _productRepo.SaveProductsAsync(new List<Product> { product });
+
+            return Ok();
         }
-        catch (Exception ex)
+
+        /// <summary>
+        /// GET api/products/tracked
+        /// Get all tracked products.
+        /// </summary>
+        [HttpGet("tracked")]
+        public async Task<IActionResult> GetTracked()
         {
-            _logger.LogError(ex, "Unexpected error while saving products.");
-            return StatusCode(500, $"Unexpected error: {ex.Message}");
+            var trackedProducts = await _productRepo.GetTrackedProductsAsync();
+            return Ok(trackedProducts);
         }
-
-        return Ok(new { Count = products.Count });
-    }
-
-    // GET: api/products
-    [HttpGet]
-    public async Task<IActionResult> GetAll()
-    {
-        var products = await _db.Products
-            .OrderByDescending(p => p.Id)
-            .ToListAsync();
-
-        return Ok(products);
     }
 }

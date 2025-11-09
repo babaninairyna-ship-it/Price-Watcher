@@ -1,19 +1,18 @@
 services:
   mssql:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: mssql
+    container_name: pricewatcher_mssql
     environment:
-      SA_PASSWORD: "YourStrongPassword123!"
       ACCEPT_EULA: "Y"
+      SA_PASSWORD: "DockerMSSQL!2025"
     ports:
-      - "1433:1433"
+      - "1400:1433"
+    volumes:
+      - pricewatcher_mssql_data:/var/opt/mssql
     healthcheck:
-      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourStrongPassword123!", "-Q", "SELECT 1"]
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P DockerMSSQL!2025 -Q 'SELECT 1' || exit 1"]
       interval: 10s
-      timeout: 10s
       retries: 10
-    networks:
-      - pricenet
 
   pricewatcherapi:
     build:
@@ -22,19 +21,14 @@ services:
     container_name: pricewatcherapi
     depends_on:
       - mssql
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=mssql;Database=PriceWatcherDb;User Id=sa;Password=YourPassword123!;Integrated Security=False;TrustServerCertificate=True;
     ports:
       - "7060:8080"  # HTTP
       - "7061:8081"  # HTTPS
-    environment:
-      - ASPNETCORE_URLS=https://+:8081;http://+:8080
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_Kestrel__Certificates__Default__Password=YourStrongPassword123
-      - ASPNETCORE_Kestrel__Certificates__Default__Path=/https/pricewatcherapi.pfx
-      - ConnectionStrings__DefaultConnection=Server=mssql;Database=PriceWatcherDb;User Id=sa;Password=YourStrongPassword123!;TrustServerCertificate=True;
-    volumes:
-      - ${USERPROFILE}\.aspnet\https:/https:ro
     networks:
       - pricenet
+
 
   catalogloader:
     build:
@@ -42,11 +36,14 @@ services:
       dockerfile: CatalogLoader/Dockerfile
     container_name: catalogloader
     depends_on:
-      - pricewatcherapi
+      - mssql
     environment:
-      - ApiSettings__BaseUrl=http://pricewatcherapi:8080
+      - ConnectionStrings__DefaultConnection=Server=mssql;Database=PriceWatcherDb;User Id=sa;Password=YourPassword123!;Integrated Security=False;TrustServerCertificate=True;
     networks:
       - pricenet
+
+volumes:
+  pricewatcher_mssql_data:
 
 networks:
   pricenet:

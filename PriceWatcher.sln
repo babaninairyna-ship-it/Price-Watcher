@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PriceWatcher.Api", "PriceWa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CatalogLoader", "CatalogLoader\CatalogLoader.csproj", "{DA2D63B4-89F9-455E-9501-BAC038129911}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "Shared\Shared.csproj", "{993E9E31-9430-450D-AB7E-6CF0F62B96AD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PriceWatcher.Data", "PriceWatcher.Data\PriceWatcher.Data.csproj", "{6F9F5F18-0D80-E88A-2FBA-E7940652B2FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,10 +23,10 @@ Global
 		{DA2D63B4-89F9-455E-9501-BAC038129911}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DA2D63B4-89F9-455E-9501-BAC038129911}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DA2D63B4-89F9-455E-9501-BAC038129911}.Release|Any CPU.Build.0 = Release|Any CPU
-		{993E9E31-9430-450D-AB7E-6CF0F62B96AD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{993E9E31-9430-450D-AB7E-6CF0F62B96AD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{993E9E31-9430-450D-AB7E-6CF0F62B96AD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{993E9E31-9430-450D-AB7E-6CF0F62B96AD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6F9F5F18-0D80-E88A-2FBA-E7940652B2FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F9F5F18-0D80-E88A-2FBA-E7940652B2FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F9F5F18-0D80-E88A-2FBA-E7940652B2FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F9F5F18-0D80-E88A-2FBA-E7940652B2FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

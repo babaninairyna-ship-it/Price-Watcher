@@ -2,7 +2,7 @@
 
 #nullable disable
 
-namespace PriceWatcher.Api.Migrations
+namespace PriceWatcher.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration
@@ -16,10 +16,11 @@ namespace PriceWatcher.Api.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    OnlinerId = table.Column<long>(type: "bigint", nullable: false),
+                    OnlinerId = table.Column<int>(type: "int", nullable: false),
                     FullName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PriceMin = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
-                    PriceMax = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false)
+                    PriceMax = table.Column<decimal>(type: "decimal(18,2)", precision: 18, scale: 2, nullable: false),
+                    IsTracked = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
