@@ -1,7 +1,7 @@
-﻿using CatalogLoader.Messages;
-using CatalogLoader.Messaging;
+﻿using CatalogLoader.Messaging;
 using PriceWatcher.Data.Models;
 using PriceWatcher.Data.Repositories;
+using System.Text.Json;
 
 namespace CatalogLoader.Services
 {
@@ -38,35 +38,29 @@ namespace CatalogLoader.Services
                 {
                     using var scope = _scopeFactory.CreateScope();
 
-                    // Get repositories from DI scope
                     var productRepo = scope.ServiceProvider.GetRequiredService<ProductRepository>();
                     var priceHistoryRepo = scope.ServiceProvider.GetRequiredService<PriceHistoryRepository>();
 
-                    // Get all tracked products
                     var trackedProducts = await productRepo.GetTrackedProductsAsync();
 
                     foreach (var product in trackedProducts)
                     {
-                        // Fetch the latest product data from Onliner API
                         var updatedProduct = await _onlinerClient.FetchProductByKeyAsync(product.OnlinerKey);
                         if (updatedProduct == null)
                             continue;
 
                         bool priceChanged = false;
 
-                        // Check if prices have changed
                         if (updatedProduct.PriceMin != product.PriceMin || updatedProduct.PriceMax != product.PriceMax)
                         {
                             decimal oldMin = product.PriceMin;
                             decimal oldMax = product.PriceMax;
 
-                            // Update product prices in database
                             product.PriceMin = updatedProduct.PriceMin;
                             product.PriceMax = updatedProduct.PriceMax;
                             await productRepo.SaveProductsAsync(new List<Product> { product });
                             priceChanged = true;
 
-                            // Save price change history
                             var historyEntry = new PriceHistory
                             {
                                 OnlinerKey = product.OnlinerKey,
@@ -78,7 +72,6 @@ namespace CatalogLoader.Services
                             };
                             await priceHistoryRepo.AddAsync(historyEntry);
 
-                            // Publish price change message to RabbitMQ
                             if (priceChanged)
                             {
                                 var message = new PriceChangedMessage
@@ -91,7 +84,9 @@ namespace CatalogLoader.Services
                                     ChangedAt = DateTime.UtcNow
                                 };
 
-                                await _messagePublisher.PublishAsync(message, "price_changes");
+                                string messageJson = JsonSerializer.Serialize(message);
+
+                                await _messagePublisher.PublishAsync("price_changes", messageJson);
                             }
                         }
                     }
@@ -101,7 +96,6 @@ namespace CatalogLoader.Services
                     _logger.LogError(ex, "Error while checking price changes.");
                 }
 
-                // Delay 5 minutes before next check
                 await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
             }
         }

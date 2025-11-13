@@ -1,18 +1,14 @@
 services:
-  mssql:
+  sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: pricewatcher_mssql
+    container_name: pricewatcher-sql
     environment:
+      SA_PASSWORD: "StrongPassword123!"
       ACCEPT_EULA: "Y"
-      SA_PASSWORD: "DockerMSSQL!2025"
     ports:
-      - "1400:1433"
+      - "1433:1433"
     volumes:
-      - pricewatcher_mssql_data:/var/opt/mssql
-    healthcheck:
-      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P DockerMSSQL!2025 -Q 'SELECT 1' || exit 1"]
-      interval: 10s
-      retries: 10
+      - sql_data:/var/opt/mssql
 
   pricewatcherapi:
     build:
@@ -24,8 +20,7 @@ services:
     environment:
       - ConnectionStrings__DefaultConnection=Server=mssql;Database=PriceWatcherDb;User Id=sa;Password=YourPassword123!;Integrated Security=False;TrustServerCertificate=True;
     ports:
-      - "7060:8080"  # HTTP
-      - "7061:8081"  # HTTPS
+      - "7060:8081"  # HTTP
     networks:
       - pricenet
 
@@ -43,7 +38,7 @@ services:
       - pricenet
 
 volumes:
-  pricewatcher_mssql_data:
+  sql_data:
 
 networks:
   pricenet:
