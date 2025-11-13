@@ -1,4 +1,6 @@
 ﻿using CatalogLoader.Messaging;
+using Microsoft.AspNetCore.SignalR;
+using PriceWatcher.Api.Hubs;
 using PriceWatcher.Data.Models;
 using PriceWatcher.Data.Repositories;
 
@@ -8,11 +10,16 @@ namespace PriceWatcher.Api.Messaging
     {
         private readonly ProductRepository _productRepo;
         private readonly PriceHistoryRepository _historyRepo;
+        private readonly IHubContext<PriceChangeHub> _hubContext;
 
-        public PriceChangedHandler(ProductRepository productRepo, PriceHistoryRepository historyRepo)
+        public PriceChangedHandler(
+           ProductRepository productRepo,
+           PriceHistoryRepository historyRepo,
+           IHubContext<PriceChangeHub> hubContext)
         {
             _productRepo = productRepo;
             _historyRepo = historyRepo;
+            _hubContext = hubContext;
         }
 
         /// <summary>
@@ -39,6 +46,15 @@ namespace PriceWatcher.Api.Messaging
                 ChangedAt = message.ChangedAt
             };
             await _historyRepo.AddAsync(history);
+
+            await _hubContext.Clients.All.SendAsync(
+                "ReceivePriceChange",
+                message.OnlinerKey,
+                message.OldPriceMin,
+                message.NewPriceMin,
+                message.OldPriceMax,
+                message.NewPriceMax
+            );
         }
     }
 }

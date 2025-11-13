@@ -1,0 +1,29 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>SignalR Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.0/signalr.min.js"></script>
+</head>
+<body>
+    <h2>SignalR Price Change Test</h2>
+    <div id="log"></div>
+
+    <script>
+
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("https://localhost:7060/priceChangeHub")
+            .configureLogging(signalR.LogLevel.Information)
+            .build();
+
+        connection.on("ReceivePriceChange", (data) => {
+            console.log("Price change received:", data);
+            document.body.innerHTML += `<p>${JSON.stringify(data)}</p>`;
+        });
+
+        connection.start()
+            .then(() => console.log("Connected to SignalR hub"))
+            .catch(err => console.error("Connection error:", err));
+    </script>
+</body>
+</html>
