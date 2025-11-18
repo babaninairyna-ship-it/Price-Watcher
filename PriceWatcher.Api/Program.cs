@@ -1,9 +1,15 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using CatalogLoader.Interfaces;
+using CatalogLoader.Messaging;
+using CatalogLoader.Services;
+using Microsoft.EntityFrameworkCore;
 using PriceWatcher.Api.Hubs;
 using PriceWatcher.Api.Messaging;
 using PriceWatcher.Api.Services;
 using PriceWatcher.Data;
+using PriceWatcher.Data.Interfaces;
 using PriceWatcher.Data.Repositories;
+using PriceWatcher.Services;
+using PriceWatcher.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,16 +25,23 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ---- HttpClient ----
 builder.Services.AddHttpClient();
 
-// Scoped services
+// Repositories
 builder.Services.AddScoped<ProductRepository>();
 builder.Services.AddScoped<PriceHistoryRepository>();
-builder.Services.AddScoped<PriceChangedHandler>();
 
-// Hosted service 
-builder.Services.AddHostedService<PriceChangeConsumerService>();
+// Services
+builder.Services.AddScoped<IProductService, ProductService>();
+builder.Services.AddScoped<IPriceChangeProcessor, PriceChangeProcessor>();
 
 // RabbitMQ subscriber
+builder.Services.AddSingleton<OnlinerClient>();
 builder.Services.AddSingleton<IMessageSubscriber, RabbitMqSubscriber>();
+builder.Services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
+
+
+// Background Services
+builder.Services.AddHostedService<PriceChangeConsumerService>();
+builder.Services.AddHostedService<PriceTrackingService>();
 
 builder.Services.AddSignalR();
 

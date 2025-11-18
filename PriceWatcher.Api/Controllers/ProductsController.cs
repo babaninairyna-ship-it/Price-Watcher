@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using PriceWatcher.Data.Repositories;
-using CatalogLoader.Services;
-using PriceWatcher.Data.Models;
+using PriceWatcher.Services.Interfaces;
 
 namespace PriceWatcher.Api.Controllers
 {
@@ -9,20 +7,16 @@ namespace PriceWatcher.Api.Controllers
     [Route("api/[controller]")]
     public class ProductsController : ControllerBase
     {
-        private readonly ProductRepository _productRepo;
-        private readonly OnlinerClient _onlinerClient;
+        private readonly IProductService _productService;
 
-        public ProductsController(
-            ProductRepository productRepo,
-            OnlinerClient onlinerClient)
+        public ProductsController(IProductService productService)
         {
-            _productRepo = productRepo;
-            _onlinerClient = onlinerClient;
+            _productService = productService;
         }
 
         /// <summary>
         /// GET api/products?search=iphone
-        /// Fetch products from Onliner API and merge with tracked status.
+        /// Search products on Onliner + merge tracking state.
         /// </summary>
         [HttpGet]
         public async Task<IActionResult> Get([FromQuery] string? search)
@@ -30,64 +24,41 @@ namespace PriceWatcher.Api.Controllers
             if (string.IsNullOrWhiteSpace(search))
                 return BadRequest("Search query cannot be empty.");
 
-            var fetchedProducts = await _onlinerClient.FetchProductsAsync(search);
-            var trackedProducts = await _productRepo.GetTrackedProductsAsync();
-
-            var merged = fetchedProducts.Select(p =>
-            {
-                var tracked = trackedProducts.FirstOrDefault(t => t.OnlinerKey == p.OnlinerKey);
-                if (tracked != null)
-                    p.IsTracked = tracked.IsTracked;
-
-                return p;
-            }).ToList();
-
-            return Ok(merged);
+            var result = await _productService.SearchWithTrackingAsync(search);
+            return Ok(result);
         }
 
         /// <summary>
         /// POST api/products/{key}/track
-        /// Mark product as tracked.
+        /// Set tracked = true.
         /// </summary>
         [HttpPost("{key}/track")]
         public async Task<IActionResult> Track(string key)
         {
-            var product = await _onlinerClient.FetchProductByKeyAsync(key);
-            if (product == null)
-                return NotFound("Product not found.");
-
-            product.IsTracked = true;
-            await _productRepo.SaveProductsAsync(new List<Product> { product });
-
+            await _productService.ToggleTrackingAsync(key, true);
             return Ok();
         }
 
         /// <summary>
         /// POST api/products/{key}/untrack
-        /// Unmark product as tracked.
+        /// Set tracked = false.
         /// </summary>
         [HttpPost("{key}/untrack")]
         public async Task<IActionResult> Untrack(string key)
         {
-            var product = await _productRepo.GetByKeyAsync(key);
-            if (product == null)
-                return NotFound("Product not found.");
-
-            product.IsTracked = false;
-            await _productRepo.SaveProductsAsync(new List<Product> { product });
-
+            await _productService.ToggleTrackingAsync(key, false);
             return Ok();
         }
 
         /// <summary>
         /// GET api/products/tracked
-        /// Get all tracked products.
+        /// Returns all tracked products.
         /// </summary>
         [HttpGet("tracked")]
         public async Task<IActionResult> GetTracked()
         {
-            var trackedProducts = await _productRepo.GetTrackedProductsAsync();
-            return Ok(trackedProducts);
+            var result = await _productService.GetTrackedAsync();
+            return Ok(result);
         }
     }
 }

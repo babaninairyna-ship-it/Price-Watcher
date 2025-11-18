@@ -1,4 +1,5 @@
-﻿using RabbitMQ.Client;
+﻿using CatalogLoader.Interfaces;
+using RabbitMQ.Client;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -33,7 +34,7 @@ namespace CatalogLoader.Messaging
             // Declare a durable queue
             await _channel.QueueDeclareAsync(
                 queue: safeQueueName,
-                durable: true,         // queue survives broker restarts
+                durable: true,
                 exclusive: false,
                 autoDelete: false,
                 arguments: null);
@@ -41,7 +42,7 @@ namespace CatalogLoader.Messaging
             var body = Encoding.UTF8.GetBytes(message);
             var properties = new BasicProperties
             {
-                Persistent = true      // make the message persistent
+                Persistent = true
             };
 
             // Publish the message

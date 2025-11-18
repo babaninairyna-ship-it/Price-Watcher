@@ -6,7 +6,7 @@ using PriceWatcher.Data.Repositories;
 
 namespace PriceWatcher.Api.Messaging
 {
-    public class PriceChangedHandler
+    public class PriceChangedHandler : IPriceChangedHandler
     {
         private readonly ProductRepository _productRepo;
         private readonly PriceHistoryRepository _historyRepo;

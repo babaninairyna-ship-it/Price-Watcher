@@ -28,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CatalogLoader\CatalogLoader.csproj" />
     <ProjectReference Include="..\PriceWatcher.Data\PriceWatcher.Data.csproj" />
+    <ProjectReference Include="..\PriceWatcher.Services\PriceWatcher.Services.csproj" />
   </ItemGroup>
 
 </Project>

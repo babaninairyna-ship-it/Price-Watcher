@@ -1,8 +1,11 @@
-﻿using CatalogLoader.Messaging;
+﻿using CatalogLoader.Interfaces;
+using CatalogLoader.Messaging;
 using CatalogLoader.Services;
 using Microsoft.EntityFrameworkCore;
 using PriceWatcher.Data;
+using PriceWatcher.Data.Interfaces;
 using PriceWatcher.Data.Repositories;
+using PriceWatcher.Services;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -12,18 +15,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 
 // ---- Repositories ----
-builder.Services.AddScoped<ProductRepository>();
-builder.Services.AddScoped<PriceHistoryRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IPriceHistoryRepository, PriceHistoryRepository>();
 
 // ---- HttpClient ----
 builder.Services.AddHttpClient();
 
 // ---- Singleton services ----
 builder.Services.AddSingleton<OnlinerClient>();
-builder.Services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
 
 // ---- Background services ----
 builder.Services.AddHostedService<OnlinerBackgroundService>();
+
+builder.Services.AddScoped<IPriceChangeProcessor, PriceChangeProcessor>();
 builder.Services.AddHostedService<PriceTrackingService>();
 
 var app = builder.Build();

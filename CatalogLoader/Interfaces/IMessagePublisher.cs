@@ -1,4 +1,4 @@
-﻿namespace CatalogLoader.Messaging
+﻿namespace CatalogLoader.Interfaces
 {
     /// <summary>
     /// Interface for publishing messages to a message broker.

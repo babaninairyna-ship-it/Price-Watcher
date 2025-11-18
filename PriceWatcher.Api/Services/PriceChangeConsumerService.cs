@@ -4,6 +4,10 @@ using PriceWatcher.Api.Messaging;
 
 namespace PriceWatcher.Api.Services
 {
+    /// <summary>
+    /// Background service that consumes price change messages and
+    /// delegates processing to IPriceChangedHandler inside DI scope.
+    /// </summary>
     public class PriceChangeConsumerService : BackgroundService
     {
         private readonly ILogger<PriceChangeConsumerService> _logger;
@@ -31,9 +35,8 @@ namespace PriceWatcher.Api.Services
                     var priceChange = JsonSerializer.Deserialize<PriceChangedMessage>(msg);
                     if (priceChange == null) return;
 
-                    // создаём scope для каждого сообщения
                     using var scope = _scopeFactory.CreateScope();
-                    var handler = scope.ServiceProvider.GetRequiredService<PriceChangedHandler>();
+                    var handler = scope.ServiceProvider.GetRequiredService<IPriceChangedHandler>();
 
                     await handler.HandleAsync(priceChange);
 

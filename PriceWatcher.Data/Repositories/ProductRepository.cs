@@ -1,6 +1,5 @@
-﻿#nullable enable
-
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using PriceWatcher.Data.Interfaces;
 using PriceWatcher.Data.Models;
 
 namespace PriceWatcher.Data.Repositories
@@ -9,7 +8,7 @@ namespace PriceWatcher.Data.Repositories
     /// Repository for managing Product entities in the database.
     /// Provides methods to save, retrieve, track, and search products.
     /// </summary>
-    public class ProductRepository
+    public class ProductRepository : IProductRepository
     {
         private readonly ApplicationDbContext _db;
 

@@ -1,15 +1,13 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PriceWatcher.Data.Interfaces;
 using PriceWatcher.Data.Models;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace PriceWatcher.Data.Repositories
 {
     /// <summary>
     /// Repository for saving and retrieving price change history.
     /// </summary>
-    public class PriceHistoryRepository
+    public class PriceHistoryRepository : IPriceHistoryRepository
     {
         private readonly ApplicationDbContext _db;
 
