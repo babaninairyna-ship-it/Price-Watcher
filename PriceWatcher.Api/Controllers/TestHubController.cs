@@ -1,7 +1,7 @@
-﻿using CatalogLoader.Messaging;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using PriceWatcher.Api.Hubs;
+using PriceWatcher.Services.Messages;
 
 namespace PriceWatcher.Api.Controllers
 {

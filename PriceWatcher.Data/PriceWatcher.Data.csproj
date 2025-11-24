@@ -26,4 +26,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PriceWatcher.Services\PriceWatcher.Services.csproj" />
+  </ItemGroup>
+
 </Project>

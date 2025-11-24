@@ -1,4 +1,4 @@
-﻿using CatalogLoader.Messaging;
+﻿using PriceWatcher.Services.Messages;
 
 /// <summary>
 /// Abstraction for handling price change messages.

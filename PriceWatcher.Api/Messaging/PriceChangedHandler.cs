@@ -1,15 +1,16 @@
-﻿using CatalogLoader.Messaging;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using PriceWatcher.Api.Hubs;
-using PriceWatcher.Data.Models;
 using PriceWatcher.Data.Repositories;
+using PriceWatcher.Domain;
+using PriceWatcher.Domain.Models;
+using PriceWatcher.Services.Messages;
 
 namespace PriceWatcher.Api.Messaging
 {
     public class PriceChangedHandler : IPriceChangedHandler
     {
-        private readonly ProductRepository _productRepo;
-        private readonly PriceHistoryRepository _historyRepo;
+        private readonly IProductRepository _productRepo;
+        private readonly IPriceHistoryRepository _historyRepo;
         private readonly IHubContext<PriceChangeHub> _hubContext;
 
         public PriceChangedHandler(

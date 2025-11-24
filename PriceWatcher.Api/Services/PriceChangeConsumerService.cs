@@ -1,6 +1,6 @@
-﻿using CatalogLoader.Messaging;
-using System.Text.Json;
+﻿using System.Text.Json;
 using PriceWatcher.Api.Messaging;
+using PriceWatcher.Services.Messages;
 
 namespace PriceWatcher.Api.Services
 {

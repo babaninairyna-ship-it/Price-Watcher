@@ -1,21 +1,18 @@
-﻿using PriceWatcher.Data.Repositories;
-using PriceWatcher.Data.Models;
+﻿using PriceWatcher.Domain;
+using PriceWatcher.Domain.Models;
 using PriceWatcher.Services.Interfaces;
-using CatalogLoader.Services;
 
 namespace PriceWatcher.Services
 {
     public class ProductService : IProductService
     {
-        private readonly ProductRepository _productRepo;
-        private readonly OnlinerClient _onlinerClient;
+        private readonly IProductRepository _productRepo;
+        private readonly ICatalogClient _catalogClient;
 
-        public ProductService(
-            ProductRepository productRepo,
-            OnlinerClient onlinerClient)
+        public ProductService(IProductRepository productRepo, ICatalogClient catalogClient)
         {
             _productRepo = productRepo;
-            _onlinerClient = onlinerClient;
+            _catalogClient = catalogClient;
         }
 
         /// <summary>
@@ -23,7 +20,7 @@ namespace PriceWatcher.Services
         /// </summary>
         public async Task<List<Product>> SearchWithTrackingAsync(string search)
         {
-            var fetched = await _onlinerClient.FetchProductsAsync(search);
+            var fetched = await _catalogClient.FetchProductsAsync(search);
             var tracked = await _productRepo.GetTrackedProductsAsync();
 
             foreach (var p in fetched)
@@ -45,7 +42,7 @@ namespace PriceWatcher.Services
 
             if (state)
             {
-                product = await _onlinerClient.FetchProductByKeyAsync(key);
+                product = await _catalogClient.FetchProductByKeyAsync(key);
                 if (product == null)
                     throw new Exception("Product not found");
             }

@@ -1,7 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PriceWatcher.Api.Hubs;
-using PriceWatcher.Api.Messaging;
-using PriceWatcher.Api.Services;
 using PriceWatcher.Data;
 using PriceWatcher.Data.API.Onliner;
 using PriceWatcher.Data.Repositories;
@@ -10,12 +7,7 @@ using PriceWatcher.Services;
 using PriceWatcher.Services.Interfaces;
 using PriceWatcher.Worker.Services;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// ---- Controllers ----
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+var builder = Host.CreateApplicationBuilder(args);
 
 // ---- DbContext ----
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -24,42 +16,19 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 // ---- HttpClient ----
 builder.Services.AddHttpClient();
 
-// RabbitMQ subscriber
+// ---- Singleton services ----
 builder.Services.AddSingleton<ICatalogClient, OnlinerClient>();
-builder.Services.AddSingleton<IMessageSubscriber, RabbitMqSubscriber>();
 builder.Services.AddSingleton<IMessagePublisher, RabbitMqPublisher>();
 
-// Repositories
+// ---- Repositories ----
 builder.Services.AddScoped<IProductRepository, ProductRepository>();
 builder.Services.AddScoped<IPriceHistoryRepository, PriceHistoryRepository>();
-
-// Services
-builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IPriceChangeProcessor, PriceChangeProcessor>();
 
-// Background Services
-builder.Services.AddHostedService<PriceChangeConsumerService>();
-
-builder.Services.AddSignalR();
+// ---- Background services ----
+builder.Services.AddHostedService<OnlinerBackgroundService>();
+builder.Services.AddHostedService<PriceTrackingService>();
 
 var app = builder.Build();
-
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
-
-app.UseRouting();
-
-app.UseHttpsRedirection();
-
-app.UseAuthorization();
-
-app.UseStaticFiles();
-
-app.MapHub<PriceChangeHub>("/priceChangeHub");
-
-app.MapControllers();
 
 app.Run();

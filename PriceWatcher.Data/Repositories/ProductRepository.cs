@@ -1,6 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using PriceWatcher.Data.Interfaces;
-using PriceWatcher.Data.Models;
+using PriceWatcher.Domain;
+using PriceWatcher.Domain.Models;
 
 namespace PriceWatcher.Data.Repositories
 {

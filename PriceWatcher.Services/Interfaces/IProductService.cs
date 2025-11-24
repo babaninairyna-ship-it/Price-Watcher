@@ -1,4 +1,4 @@
-﻿using PriceWatcher.Data.Models;
+﻿using PriceWatcher.Domain.Models;
 
 namespace PriceWatcher.Services.Interfaces
 {

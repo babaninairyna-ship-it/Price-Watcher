@@ -23,12 +23,11 @@
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CatalogLoader\CatalogLoader.csproj" />
     <ProjectReference Include="..\PriceWatcher.Data\PriceWatcher.Data.csproj" />
-    <ProjectReference Include="..\PriceWatcher.Services\PriceWatcher.Services.csproj" />
   </ItemGroup>
 
 </Project>
